@@ -1,5 +1,6 @@
 from subprocess import Popen, PIPE
 from os import path
+import sys
 import string
 import tempfile
 import unittest
@@ -53,20 +54,22 @@ class Interaction:
         self.event.set()
 
 class FSAutoComplete:
-    def __init__(self, dir, debug = False):
+    def __init__(self, dir, debug=False):
         if debug:
             self.logfiledir = tempfile.gettempdir() + "/log.txt"
             self.logfile = open(self.logfiledir, "w")
         else:
             self.logfile = None
 
-        command = ['mono', dir + '/bin/fsautocomplete.exe']
-        opts = { 'stdin': PIPE, 'stdout': PIPE, 'stderr': PIPE, 'universal_newlines': True }
+        command = \
+            ([] if sys.platform in ("win32", "cygwin") else ['mono']) + \
+            [dir + '/bin/fsautocomplete.exe']
+        opts = {
+            'stdin': PIPE, 'stdout': PIPE, 'stderr': PIPE,
+            'universal_newlines': True
+        }
         hidewin.addopt(opts)
-        try:
-            self.p = Popen(command, **opts)
-        except WindowsError:
-            self.p = Popen(command[1:], **opts)
+        self.p = Popen(command, **opts)
 
         self.debug = debug
         self.switch_to_json()

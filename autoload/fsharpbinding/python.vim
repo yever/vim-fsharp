@@ -41,6 +41,15 @@ vim.command('return ' + result)
 EOF
 endfunction
 
+if has("win32") || has("win32unix")
+    function! s:runexe(...)
+        execute '!' . join(a:000)
+    endfunction
+else
+    function! s:runexe(...)
+        execute '!mono ' . join(a:000)
+    endif
+endfunction
 
 function! fsharpbinding#python#LoadLogFile()
 python << EOF
@@ -85,13 +94,13 @@ function! fsharpbinding#python#RunProject(...)
     try
         execute 'wa'
         if a:0 > 0
-            execute '!mono ' . fnameescape(a:1)
+            call s:runexe(fnameescape(a:1))
         elseif exists('b:proj_file')
             let cmd = 'G.projects["' . b:proj_file . '"]["Output"]'
             echom "runproj pre s:pyeval " cmd
             let target = s:pyeval(cmd)
             echom "target" target
-            execute '!mono ' . fnameescape(target)
+            call s:runexe(fnameescape(target))
         else
             echoe "no project file could be found" > 0
         endif
@@ -105,12 +114,12 @@ function! fsharpbinding#python#RunTests(...)
         execute 'wa'
         call fsharpbinding#python#BuildProject()
         if a:0 > 0 && exists('g:fsharp_test_runner')
-            execute '!mono ' . g:fsharp_test_runner fnameescape(a:1)
+            call s:runexe(g:fsharp_test_runner, fnameescape(a:1))
         elseif exists('b:proj_file') && exists('g:fsharp_test_runner')
             let cmd = 'G.projects["' . b:proj_file . '"]["Output"]'
             let target = s:pyeval(cmd)
             echom "target" target
-            execute '!mono ' . g:fsharp_test_runner fnameescape(target)
+            call s:runexe(g:fsharp_test_runner, fnameescape(target))
         else
             echoe "no project file or test runner could be found"
         endif
